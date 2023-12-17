@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { errorHandler } from "../middleware/errorHandler";
 import { ResponseData } from "../utils/ResponseData";
 import fileUpload from "express-fileupload";
-import sharp from "sharp";
+// import sharp from "sharp";
 
 import {v2 as cloudinary} from 'cloudinary';
           
@@ -46,26 +46,26 @@ export const uploadMedia = errorHandler(async (request: Request, response: Respo
 
     // Adding a watermark on the image
     const fileBuffer = file.data;
-    const watermarkBuffer = await sharp('./public/watermark.png').toBuffer()
+    // const watermarkBuffer = await sharp('./public/watermark.png').toBuffer()
 
-    const fileMetadata = await sharp(fileBuffer).metadata();
+    // const fileMetadata = await sharp(fileBuffer).metadata();
 
-    // setting a custom width for the watermark over image 
-    const targetWidth = Math.floor(fileMetadata.width as number * 0.8);
+    // // setting a custom width for the watermark over image 
+    // const targetWidth = Math.floor(fileMetadata.width as number * 0.8);
 
-    // resizing the watermark on the image 
-    const resizeWatermark = await sharp(watermarkBuffer)
-        .resize({width: targetWidth, fit: 'contain'})
-        .toBuffer().catch((error => {
-            console.log(error)
-        }))
+    // // resizing the watermark on the image 
+    // const resizeWatermark = await sharp(watermarkBuffer)
+    //     .resize({width: targetWidth, fit: 'contain'})
+    //     .toBuffer().catch((error => {
+    //         console.log(error)
+    //     }))
     
-    // merging both images 
-    const mergedFile = await sharp(fileBuffer)
-        .composite([{input: resizeWatermark as Buffer, gravity: 'center', blend: 'over'}])
-        .toBuffer().catch((error => {
-            console.log(error)
-        }))
+    // // merging both images 
+    // const mergedFile = await sharp(fileBuffer)
+    //     .composite([{input: resizeWatermark as Buffer, gravity: 'center', blend: 'over'}])
+    //     .toBuffer().catch((error => {
+    //         console.log(error)
+    //     }))
 
     // const uploadFileToCloudinary = cloudinary.uploader.upload_stream(
     //     {
@@ -88,7 +88,7 @@ export const uploadMedia = errorHandler(async (request: Request, response: Respo
     // console.log(uploadFileToCloudinary);
 
     // response.send(uploadFileToCloudinary);
-        data = new ResponseData("success", 200, "Something here", mergedFile)
+        data = new ResponseData("success", 200, "Something here", null)
         return response.status(data.statusCode).json(data);
 });
 
