@@ -1,12 +1,7 @@
 import { Request, Response } from "express";
 import { errorHandler } from "../middleware/errorHandler";
 import { ProductServices } from "../services/ProductServices";
-
-export const createProduct = errorHandler(async (request: Request, response: Response) => {
-    const data = await ProductServices.createProduct(request.body);
-
-    return response.status(data.statusCode).json(data);
-});
+import Product from "../model/product";
 
 export const getAllProducts = errorHandler(async (_request: Request, response: Response) => {
     const data = await ProductServices.getAllProducts();
@@ -20,16 +15,21 @@ export const getSingleProduct= errorHandler(async (request: Request, response: R
     return response.status(data.statusCode).json(data);
 });
 
-export const updateProduct = errorHandler(async (request: Request, response: Response) => {
-    const payload = {...request.params, ...request.body}
-    const data = await ProductServices.updateProduct({...request.params, ...request.body});
+export const searchProducts = errorHandler(async (request:Request, response: Response) => {
+    const { tags, name } = request.query;
+    const query: any = {};
+
+    if (tags) {
+        query.tags = { $in: Array.isArray(tags) ? tags : [tags] };
+    }
     
-    return response.status(data.statusCode).json(data);
-});
-
-export const deleteProduct = errorHandler(async (request: Request, response: Response) => {
-    const payload = {...request.params, ...request.body}
-    const data = await ProductServices.deleteProduct(payload);
-
-    return response.status(data.statusCode).json(data);
-});
+    if (name) {
+        const nameString: string = name as string;
+        query.name = new RegExp(nameString, 'i');
+    }
+    
+    // Perform the search using the built query
+    const products = await Product.find(query);
+    
+    response.json(products);
+})
