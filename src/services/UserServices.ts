@@ -295,7 +295,7 @@ export class UserServices {
     static async updateUser (payload: UpdateUserPayload) {
         let data;
         const {userId, firstName, lastName, email, phoneNumber, image} = payload;
-        if(!userId || !firstName && !lastName && !email && !phoneNumber && !image){
+        if(!firstName && !lastName && !email && !phoneNumber && !image){
             data = new ResponseData("error", 400, "Invalid payload", null);
         }
         const user = await User.findOneAndUpdate(
