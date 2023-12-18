@@ -103,21 +103,21 @@ export class CartItemServices {
             {
                 $lookup: {
                     from: "users",
-                    localField: "_id",
-                    foreignField: "userId",
-                    as: "user",
+                    localField: "userId",
+                    foreignField: "_id",
+                    as: "user_details",
                 },
             },
-            {$unwind: "$user"},
-            {
-                $lookup: {
-                    from: "products",
-                    localField: "_id",
-                    foreignField: "productId",
-                    as: "product",
-                },
-            },
-            { $unwind: "$product" },
+            {$unwind: "$user_details"},
+            // {
+            //     $lookup: {
+            //         from: "Product",
+            //         localField: "productId",
+            //         foreignField: "_id",
+            //         as: "product_details",
+            //     },
+            // },
+            // { $unwind: "$product_details" }
             {
                 $project: {
                     _id: 1,
