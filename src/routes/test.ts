@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { deleteDatabase } from "../controller/test";
 
 const router = Router();
 
@@ -11,5 +12,7 @@ Please make sure to be cautious while using these endpoints. The endpoints are n
 *
 *
 */}
+
+router.route('/delete').delete(deleteDatabase);
 
 export default router;
