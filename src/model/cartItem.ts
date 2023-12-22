@@ -8,8 +8,8 @@ interface CartItemInterface {
 };
 
 const CartItemSchema = new mongoose.Schema({
-    productId: {type: String, required: true},
-    userId: {type: String, required: true}
+    productId: {type: Schema.Types.ObjectId, ref: "Product", required: true},
+    userId: {type: Schema.Types.ObjectId, ref: "User", required: true}
 }, {timestamps: true});
 
 const CartItem = mongoose.model<CartItemInterface>('CartItem', CartItemSchema);

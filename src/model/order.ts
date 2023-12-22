@@ -8,8 +8,8 @@ interface OrderInterface {
 };
 
 const OrderSchema = new mongoose.Schema({
-    productId: {type: String, required: true},
-    userId: {type: String, required: true},
+    productId: {type: Schema.Types.ObjectId, ref: "Product", required: true},
+    userId: {type: Schema.Types.ObjectId, ref: "User", required: true},
     status: {type: String, default: 'PAYMENT PENDING', required: true},
     download_url: {type: String, default: null}
 });

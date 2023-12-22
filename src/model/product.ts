@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-interface ProductInterface {
+export interface ProductInterface {
     userId: string;
     name: string;
     tags: string[];
@@ -14,7 +14,7 @@ interface ProductInterface {
 }
 
 const ProductSchema = new mongoose.Schema({
-    userId: {type: String, required: true},
+    userId: {type: Schema.Types.ObjectId, ref: "User", required: true},
     name: {type: String, required: true},
     tags: {type: Array, default: []},
     description: {type: String, required: true},

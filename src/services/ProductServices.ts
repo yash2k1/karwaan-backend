@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import Product from "../model/product";
 import User from "../model/user";
 import { ResponseData } from "../utils/ResponseData";
@@ -20,11 +21,11 @@ type UpdateProductPayload = {
     price: number;
     linkToMedia: string;
     isFreeToUse: boolean;
-    id: string;
+    productId: Types.ObjectId;
 }
 
 type DeleteProductPayload = {
-    id: string;
+    productId: Types.ObjectId;
     userId: string;
 }
 
@@ -35,9 +36,7 @@ export class ProductServices {
             const {userId, name, tags, description, price, linkToMedia, isFreeToUse} = payload;
 
             if(!userId || !name || !tags || !description || !price || !linkToMedia){
-                console.log(userId, name, tags, description, price, linkToMedia, isFreeToUse);
                 data = new ResponseData("error", 400, "Invalid payload", null);
-
                 return data;
             }
         
@@ -45,13 +44,11 @@ export class ProductServices {
 
             if(!user){
                 data = new ResponseData("error", 400, "User not found", null);
-
                 return data
             }
 
             if(user.role === "user"){
                 data = new ResponseData("error", 400, "You cannot access this resourse", null);
-
                 return data;
             }
 
@@ -66,7 +63,6 @@ export class ProductServices {
             });
 
             data = new ResponseData("success", 200, "Product added successfully", newProduct);
-        
             return data;
         } catch (error) {
             throw error
@@ -86,13 +82,12 @@ export class ProductServices {
         }
     }
 
-    static async getSingleProduct (payload: string) {
+    static async getSingleProduct (payload: Types.ObjectId) {
         let data;
         const product = await Product.findById(payload);
 
         if(!product){
             data = new ResponseData("error", 400, "Prodcut not found", null);
-
             return data;
         }
         
@@ -103,11 +98,10 @@ export class ProductServices {
     static async updateProduct (payload: UpdateProductPayload) {
         let data;
 
-        const {userId, name, tags, description, price, linkToMedia, isFreeToUse, id} = payload;
+        const {userId, name, tags, description, price, linkToMedia, isFreeToUse, productId} = payload;
 
         if(!userId || (!name && !tags && !description && !price && !linkToMedia)){
             data = new ResponseData("error", 400, "Invalid payload", null);
-
             return data;
         }
 
@@ -115,17 +109,15 @@ export class ProductServices {
         
         if(!user){
             data = new ResponseData("error", 400, "User not found", null);
-
             return data
         }
 
         if(user.role === "user"){
             data = new ResponseData("error", 400, "You cannot access this resourse", null);
-
             return data;
         }
 
-        const product = await Product.findByIdAndUpdate(id, {$set: {
+        const product = await Product.findByIdAndUpdate(productId, {$set: {
             userId: userId,
             name: name,
             tags: tags,
@@ -137,7 +129,6 @@ export class ProductServices {
 
         if(!product){
             data = new ResponseData("error", 400, "Prodcut not found", null);
-
             return data;
         }
         
@@ -148,7 +139,7 @@ export class ProductServices {
     static async deleteProduct (payload: DeleteProductPayload) {
         let data;
 
-        const {id, userId} = payload;
+        const {productId, userId} = payload;
 
         if(!userId){
             data = new ResponseData("error", 400, "Invalid payload", null);
@@ -156,7 +147,7 @@ export class ProductServices {
             return data;
         }
         
-        const product = await Product.findByIdAndDelete(id);
+        const product = await Product.findByIdAndDelete(productId);
 
         const user = await User.findById(userId);
         
