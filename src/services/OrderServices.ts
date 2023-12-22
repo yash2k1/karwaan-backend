@@ -18,7 +18,6 @@ export class OrderServices {
 
         if(!userId || !productId){
             data = new ResponseData("error", 400, "Invalid payload", null);
-
             return data;
         }
 
@@ -54,7 +53,6 @@ export class OrderServices {
         }
 
         data = new ResponseData("success", 200, "Order generated", returnData);
-
         return data;
     };
 }

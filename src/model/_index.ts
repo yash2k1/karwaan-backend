@@ -8,4 +8,6 @@ export const initializeModel = () => {
     new Product();
     new CartItem();
     new Order();
+
+    return;
 }

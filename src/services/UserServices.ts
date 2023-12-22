@@ -50,13 +50,12 @@ export class UserServices {
         const {firstName, lastName, email, password} = payload;
         if(!firstName || !lastName || !email || !password){
             data = new ResponseData("error", 400, "Invalid payload", null);
-
             return data;
         }
+
         const user = await User.findOne({email: email});
         if(user){
             data = new ResponseData("error", 400, "Email is already registered, please try logging in.", null);
-
             return data;
         }
 
@@ -71,7 +70,6 @@ export class UserServices {
         });
 
         data = new ResponseData("success", 200, "Signed up successfully", {user: newUser, token: token});
-
         return data;
     }
 
@@ -153,26 +151,23 @@ export class UserServices {
         const {token, _id} = payload;
         if(!token || !_id){
             data = new ResponseData("error", 400, "Invalid payload", null);
-            
             return data;
         }
+
         const user = await User.findById(_id);
         if(!user){
             data = new ResponseData("error", 400, "Invalid user id", null);
-
             return data;
         }
 
         const time = Date.now();
         if(time > user.verifyEmailTokenExpire){
             data = new ResponseData("error", 400, "Your verification code has expired, pleae generate a new code to continue.", null);
-
             return data;
         }
 
         if(token !== user.verifyEmailToken){
             data = new ResponseData("error", 400, "Invalid token, please enter correct token to continue", null)
-
             return data;
         }
 
@@ -181,27 +176,24 @@ export class UserServices {
             verifyEmailToken: null,
             verifyEmailTokenExpire: null
         })
-
         await user.save();
 
         data = new ResponseData("success", 200, "Your email has been verified", null);
-
         return data;
     }
 
     static async forgotPassword(payload: ForgotPasswordParam){
         let data;
         const {email} = payload;
+
         if(!email){
             data = new ResponseData("error", 400, "Invalid payload", null);
-            
             return data;
         }
 
         const user = await User.findOne({email: email});
         if(!user){
             data = new ResponseData("error", 400, "This email is not registered, please signup first", null)
-
             return data;
         }
 
@@ -212,15 +204,12 @@ export class UserServices {
             passwordResetToken: token,
             passwordResetTokenExpiry: expire
         });
-
         await user.save();
 
         const verifyUrl = `http://localhost:5500/reset-password?token=${token}&id=${user?._id}`
-
         sendEmail(verifyUrl, email);
 
         data = new ResponseData("success", 200, "A mail has been sent to your registered email", null);
-
         return data;
     }
 
@@ -229,34 +218,29 @@ export class UserServices {
         const {newPassword, confirmNewPassword, token, _id} = payload;
         if(!newPassword || !confirmNewPassword || !token || !_id){
             data = new ResponseData("error", 400, "Invalid payload", null);
-
             return data;
         }
+
         const user = await User.findById(_id);
         if(!user){
             data = new ResponseData("error", 400, "Invalid user id", null);
-
             return data;
         }
         const time = Date.now();
         if(time > user.passwordResetTokenExpiry){
             data = new ResponseData("error", 400, "Your token has expired, please generate another token to continue", null);
-
             return data;
         }
 
         if(token !== user?.passwordResetToken){
             data = new ResponseData("error", 400, "Invalid token, please enter correct token to continue", null);
-
             return data;
         }
 
         if(newPassword !== confirmNewPassword){
             data = new ResponseData("error", 400, "Password do not match, both passwords should be same.", null);
-
             return data;
         }
-
         const hashPassword = this.hashPassword(newPassword);
 
         await user.updateOne({
@@ -264,11 +248,9 @@ export class UserServices {
             passwordResetToken: null,
             passwordResetTokenExpiry: null
         });
-
         await user.save();
 
         data = new ResponseData("success", 200, "Password has been updated successfully.", null);
-
         return data;
     }
 
@@ -276,19 +258,16 @@ export class UserServices {
         let data;
         if(!payload){
             data = new ResponseData("error", 400, "Invalid payload", null);
-
             return data;
         }
 
         const user = await User.findById(payload);
         if(!user){
             data = new ResponseData("error", 400, "Invalid user id", null);
-
             return data;
         }
 
         data = new ResponseData("success", 200, "Success", user)
-
         return data;
     }
     
@@ -297,6 +276,7 @@ export class UserServices {
         const {userId, firstName, lastName, email, phoneNumber, image} = payload;
         if(!firstName && !lastName && !email && !phoneNumber && !image){
             data = new ResponseData("error", 400, "Invalid payload", null);
+            return data;
         }
         const user = await User.findOneAndUpdate(
             {_id: userId}, 
@@ -310,7 +290,6 @@ export class UserServices {
             {new: true});
         if(!user){
             data = new ResponseData("error", 400, "Invalid user id", null);
-
             return data;
         }
 
@@ -318,7 +297,6 @@ export class UserServices {
             user?.updateOne({
                 isEmailValid: false,
             });
-
             await user?.save();
         }
 
@@ -326,12 +304,10 @@ export class UserServices {
             await user?.updateOne({
                 isPhoneNumberValid: false
             })
-
             await user?.save();
         }
 
         data = new ResponseData("success", 200, "User updated successfully", user);
-
         return data;
     }
 
@@ -340,12 +316,10 @@ export class UserServices {
         const user = await User.findByIdAndDelete(payload)
         if(!user){
             data = new ResponseData("error", 400, "Invalid user id", null);
-
             return data;
         }
 
         data = new ResponseData("success", 200, "Account deleted", null);
-
         return data;
     }
 
