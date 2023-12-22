@@ -1,8 +1,9 @@
 import { pipeline } from "nodemailer/lib/xoauth2";
 import CartItem from "../model/cartItem";
-import Product from "../model/product";
+import Product, { ProductInterface } from "../model/product";
 import User from "../model/user";
 import { ResponseData } from "../utils/ResponseData";
+import { Types } from "mongoose";
 
 type AddItemToCartPayload = {
     productId: string;
@@ -11,7 +12,7 @@ type AddItemToCartPayload = {
 
 type RemoveItemFromCartPayload = {
     userId: string;
-    id: string;
+    cartItemId: Types.ObjectId;
 }
 
 export class CartItemServices {
@@ -54,97 +55,67 @@ export class CartItemServices {
 
     static async removeItemFromCart (payload: RemoveItemFromCartPayload) {
         let data;
-        const {userId, id} = payload
+        const {userId, cartItemId} = payload;
         const user = await User.findById(userId);
         if(!user){
             data = new ResponseData("error", 400, "User not found", null); 
-
             return data;
         }
 
         
-        const cartItem = await CartItem.findById(id);
+        const cartItem = await CartItem.findById(cartItemId);
         
         if(!cartItem){ 
             data = new ResponseData("error", 400, "Cart Item not found", null)
-
             return data; 
         }
 
-        console.log(cartItem.userId);
-        if(userId !== cartItem.userId){
+        if(userId !== cartItem.userId.toString()){
             data = new ResponseData("error", 400, "You cannot remove item from some one else's cart", null);
-
             return data;
         }
-
 
         await cartItem.deleteOne();
         await cartItem.save();
 
         data =  new ResponseData("success", 200, "Item removed from cart", null);
-
         return data;
     }
 
-    static async getAllCartItems (payload: string) {
+    static async getAllCartItems (payload: Types.ObjectId) {
         let data;
 
         const user = await User.findById(payload);
 
         if(!user){
             data = new ResponseData("error", 400, "User not found", null);
-
             return data;
         }
 
         const cartItems = await CartItem.aggregate([
             { $match: { userId: payload } },
-            {
-                $lookup: {
-                    from: "users",
-                    localField: "userId",
-                    foreignField: "_id",
-                    as: "user_details",
-                },
-            },
+            {$lookup: {
+                from: "users",
+                localField: "userId",
+                foreignField: "_id",
+                as: "user_details",
+            }},
             {$unwind: "$user_details"},
-            // {
-            //     $lookup: {
-            //         from: "Product",
-            //         localField: "productId",
-            //         foreignField: "_id",
-            //         as: "product_details",
-            //     },
-            // },
-            // { $unwind: "$product_details" }
-            {
-                $project: {
-                    _id: 1,
-                    user_details: {
-                        firstName: "$user.firstName",
-                        lastName: "$user.lastName",
-                        email: "$user.email",
-                        phoneNumber: "$user.phoneNumber",
-                    },
-                    product_details: {
-                        name: "$product.name",
-                        price: "$product.price",
-                        description: "$product.description",
-                        linkToMedia: "$product.linkToMedia",
-                    },
-                },
-            },
+            {$lookup: {
+                from: "products",
+                localField: "productId",
+                foreignField: "_id",
+                as: "product_details",
+            }},
+            { $unwind: "$product_details" },
+            {$project: {
+                _id: 1,
+                user_details: "$user_details",
+                product_details: "$product_details"
+            }},
         ]);
-          
-        if(cartItems.length === 0){
-            data = new ResponseData("success", 200, "There are no items in your cart", cartItems);
-
-            return data;
-        }
 
         data = new ResponseData("success", 200, "Success", cartItems);
-
         return data;
     }
 
@@ -154,14 +125,12 @@ export class CartItemServices {
         const user = await User.findById(payload);
         if(!user){
             data = new ResponseData("error", 400, "User not found", null);
-
             return data;
         }
 
         const cartItems = await CartItem.find({userId: payload});
         if(cartItems.length === 0){
             data = new ResponseData("success", 200, "Your cart is already empty", null);
-
             return data;
         }
 

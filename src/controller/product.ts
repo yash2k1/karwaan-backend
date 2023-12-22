@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { errorHandler } from "../middleware/errorHandler";
 import { ProductServices } from "../services/ProductServices";
 import Product from "../model/product";
+import { Types, isObjectIdOrHexString } from "mongoose";
+import { ResponseData } from "../utils/ResponseData";
 
 export const getAllProducts = errorHandler(async (_request: Request, response: Response) => {
     const data = await ProductServices.getAllProducts();
@@ -10,8 +12,15 @@ export const getAllProducts = errorHandler(async (_request: Request, response: R
 });
 
 export const getSingleProduct= errorHandler(async (request: Request, response: Response) => {
-    const data = await ProductServices.getSingleProduct(request.params.id);
+    let data;
 
+    if(!isObjectIdOrHexString(request.params.id)){
+        data = new ResponseData("error", 400, "Please upload a valid id", null);
+        return response.status(data.statusCode).json(data);
+    }
+
+    const productId = new Types.ObjectId(request.params.id);
+    data = await ProductServices.getSingleProduct(productId);
     return response.status(data.statusCode).json(data);
 });
 
