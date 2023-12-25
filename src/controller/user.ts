@@ -39,10 +39,15 @@ export const forgotPassword = errorHandler(async(request: Request, response: Res
 });
 
 export const resetPassword = errorHandler(async(request: Request, response: Response) =>{
-    const data = await UserServices.resetPassword(request.body);
+    const payload = {...request.params, ...request.body}
+    const data = await UserServices.resetPassword(payload);
     
     return response.status(data.statusCode).json(data);
 });
+
+export const sendPhoneNumberVerificationOTP = errorHandler(async (request: Request, response: Response) => {
+    const data = await UserServices.sendPhoneNumberVerificationOTP(request.body)
+})
 
 export const getUser = errorHandler(async(request: Request, response: Response) =>{
     const data = await UserServices.getUser(request.params.id);
