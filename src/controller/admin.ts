@@ -8,8 +8,67 @@ import { Types, isObjectIdOrHexString } from "mongoose";
 import { ResponseData } from "../utils/ResponseData";
 
 export const addProduct = errorHandler(async (request: Request, response: Response) => {
-    const data = await ProductServices.createProduct(request.body);
-    return response.status(data.statusCode).json(data);
+    let data: ResponseData;
+    const uploadedFiles = request.files;
+    if(!uploadedFiles){
+        data = new ResponseData("error", 400, "Please upload a file to continue", null);
+        return response.status(data.statusCode).json(data)
+    }
+    
+    let file;
+    for(let keys in uploadedFiles){
+        file = uploadedFiles[keys];
+    }
+    
+    if(!file){
+        data = new ResponseData("error", 400, "Please upload a file to continue", null);
+        return response.status(data.statusCode).json(data)
+    }
+    
+    if(Array.isArray(file)){
+        data = new ResponseData("error", 400, "Please upload a single file at a time", null);
+        return response.status(data.statusCode).json(data)
+    }
+
+    console.log(file?.mimetype);
+
+    let type: 'image' | 'video' | null;
+    
+    const imageMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/tiff', 'image/webp']
+    const videoMimeTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/x-msvideo', 'video/quicktime', 'video/mpeg']
+
+    if(imageMimeTypes.includes(file.mimetype)){
+        type = 'image'
+    }else if (videoMimeTypes.includes(file.mimetype)){
+        type = 'video'
+    }else{
+        data = new ResponseData("error", 400, "Please enter a valid file", null);
+        return response.status(data.statusCode).json(data)
+    }
+    
+    const {userId, name, tags, price, description,  paid} = request.body;
+    if (!userId || !name || !tags || !description || !price) {
+        data = new ResponseData("error", 400, "Invalid payload", null);
+        return response.status(data.statusCode).json(data)
+    }
+
+    const newProduct = new Product({
+        userId: userId,
+        name: name,
+        tags: tags, 
+        price: price,
+        description: description,
+        image: {
+            data: file?.data.toString('base64'),
+            url: null,
+            type: type
+        }
+    });
+
+    await newProduct.save();
+
+    data = new ResponseData("success", 200, "Product created successfully", newProduct);
+    return response.status(data.statusCode).json(data)
 })
 
 export const updateProduct = errorHandler(async (request: Request, response: Response) => {
