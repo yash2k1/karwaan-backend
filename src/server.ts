@@ -7,6 +7,7 @@ import Routes from './routes/_index';
 import { connectDB } from '../config/connectDB';
 import { initializeModel } from './model/_index';
 import { globalErrorHandler } from './middleware/globalErrorHandler';
+import Razorpay from 'razorpay';
 
 dotenv.config({path: './config/.env'});
 
@@ -19,6 +20,11 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(fileUpload());
 app.use(cors());
+
+export const razorPayInstance = new Razorpay({
+    key_id: process.env.RAZOR_PAY_KEY_ID!, 
+    key_secret: process.env.RAZOR_PAY_SECRET_KEY!
+});
 
 app.listen(PORT, async () => {
     try {
