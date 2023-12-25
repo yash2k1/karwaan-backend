@@ -5,7 +5,7 @@ export const connectDB = async () => {
     try {
         let isConnected = false;
 
-        const MONGO_URI = process.env.NODE_ENV === "Development" ? 
+        const MONGO_URI = process.env.NODE_ENV === "development" ? 
             process.env.MONGO_URI_DEV : process.env.MONGO_URI_PROD;
     
         if(!MONGO_URI){
