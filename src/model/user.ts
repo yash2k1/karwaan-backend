@@ -10,6 +10,8 @@ export interface UserInterface {
     isPhoneNumberValid: boolean;
     role: 'user' | 'admin';
     image: string;
+    phoneNumberOTP: number;
+    phoneNumberOTPExpire: number;
     passwordResetToken: string;
     passwordResetTokenExpiry: number;
     verifyEmailToken: string;
@@ -28,6 +30,8 @@ const UserSchema = new mongoose.Schema({
     isPhoneNumberValid: {type: Boolean, default: null},
     role: {type: String, default: 'user'},
     image: {type: String, default: null},
+    phoneNumberOTP: {type: Number, default: null},
+    phoneNumberOTPExpire: {type: Number, default: null},
     passwordResetToken: {type: String, default: null},
     passwordResetTokenExpiry: {type: Number, default: null},
     verifyEmailToken: {type: String, default:null},

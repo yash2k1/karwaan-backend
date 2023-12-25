@@ -1,17 +1,21 @@
 import mongoose, { Schema } from "mongoose";
 
 interface OrderInterface {
-    productId: string;
+    products: string[];
     userId: string;
-    status: 'PAYMENT PENDING' | 'PAYMENT COMEPLTE',
-    download_url: string | null;
+    status: 'PAYMENT PENDING' | 'PAYMENT COMEPLTE' | 'PAYMENT FAILED',
+    amount: number;
+    payment_id: string;
+    download_url: string[];
 };
 
 const OrderSchema = new mongoose.Schema({
-    productId: {type: Schema.Types.ObjectId, ref: "Product", required: true},
+    products: [{type: Schema.Types.ObjectId, ref: "Product", required: true}],
     userId: {type: Schema.Types.ObjectId, ref: "User", required: true},
     status: {type: String, default: 'PAYMENT PENDING', required: true},
-    download_url: {type: String, default: null}
+    payment_id: {type: String, default: null},
+    amount: {type: Number, required: true},
+    download_url: {type: Array, default: []},
 });
 
 const Order = mongoose.model<OrderInterface>('Order', OrderSchema);

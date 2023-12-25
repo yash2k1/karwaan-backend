@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Types } from "mongoose";
 
 export interface ProductInterface {
     userId: string;
@@ -6,9 +6,12 @@ export interface ProductInterface {
     tags: string[];
     description: string;
     price: number;
-    linkToMedia: string;
-    size: '8"x12"' | '12"x18"' | '16"x24"' | '20"x30"' | '24"x36"';
-    isFreeToUse: boolean;
+    media: {
+        data: string,
+        url: string | null
+        type: 'image' | 'video'
+    },
+    paid: boolean;
     createdAt: string;
     updatedAt: string;
 }
@@ -19,9 +22,12 @@ const ProductSchema = new mongoose.Schema({
     tags: {type: Array, default: []},
     description: {type: String, required: true},
     price: {type: Number, required: true},
-    linkToMedia: {type: String, required: true},
-    size: {type: String, default: '8"x12"'},
-    isFreeToUse: {type: Boolean, default: false},
+    media: {
+        data: {type: String, required: true},
+        url: {type: String, default: null},
+        type: {type: String, required: true}
+    },
+    paid: {type: Boolean, default: true},
 }, {timestamps: true});
 
 const Product = mongoose.model<ProductInterface>('Product', ProductSchema);
