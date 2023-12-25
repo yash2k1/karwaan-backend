@@ -4,6 +4,7 @@ import Product, { ProductInterface } from "../model/product";
 import User from "../model/user";
 import { ResponseData } from "../utils/ResponseData";
 import { Types } from "mongoose";
+import { OrderServices } from "./OrderServices";
 
 type AddItemToCartPayload = {
     productId: string;
@@ -140,6 +141,28 @@ export class CartItemServices {
         });
 
         data = new ResponseData("success", 200, "You cart is now empty", null);
+        return data;
+    }
+
+    static checkout = async (payload: string) => {
+        let data;
+        const cartItems = await CartItem.find({userId: payload});
+        if(cartItems.length === 0){
+            data = new ResponseData("error", 200, "You cart is empty", null);
+            return data;
+        }
+
+        let products: string[] = [];
+        for(const cartItem of cartItems){
+            const product = await Product.findById(cartItem.productId);
+            if(!product){
+                return new ResponseData("error", 400, "Product not found", null);
+            }
+
+            products = [...products, product._id.toHexString()];
+        }
+
+        data = await OrderServices.createOrder({userId: payload, products})        
         return data;
     }
 }

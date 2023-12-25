@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 import { ResponseData } from "../utils/ResponseData";
 import { sendEmail } from "../utils/sendEmail";
+import { SmsServices } from "./SmsServices";
 
 type RegisterParam = {
     firstName: string;
@@ -34,13 +35,17 @@ type ResetPasswordParam = {
 }
 
 type UpdateUserPayload = {
-    userId: string;
+    id: string;
     firstName: string;
     lastName: string;
     email: string;
     password: string;
     phoneNumber: number;
     image: string;
+}
+
+type SendPhoneNumberVerificationOTPPayload = {
+    _id: string;
 }
 
 export class UserServices {
@@ -129,7 +134,7 @@ export class UserServices {
             return data;
         }
 
-        const token = this.generateToken(email);
+        const token = this.generateJWTToken(email);
         const expire = this.getExpireTime();
 
         await user.updateOne({
@@ -140,6 +145,8 @@ export class UserServices {
         await user.save();
 
         const verifyUrl = `http://localhost:5500/verify-email?token=${token}&id=${user?._id}`
+
+        await sendEmail(verifyUrl, user.email);
 
         data = new ResponseData("success", 200, "An email has been sent to your account", null);
 
@@ -197,17 +204,19 @@ export class UserServices {
             return data;
         }
 
-        const token = this.generateToken(email);
+        const token = this.generateJWTToken(email);
         const expire = this.getExpireTime();
 
         await user.updateOne({
             passwordResetToken: token,
             passwordResetTokenExpiry: expire
         });
+        
         await user.save();
 
-        const verifyUrl = `http://localhost:5500/reset-password?token=${token}&id=${user?._id}`
-        sendEmail(verifyUrl, email);
+        const verifyUrl = `http://localhost:5500/reset-password?token=${token}&id=${user?._id}`;
+
+        await sendEmail(verifyUrl, email);
 
         data = new ResponseData("success", 200, "A mail has been sent to your registered email", null);
         return data;
@@ -272,43 +281,82 @@ export class UserServices {
     }
     
     static async updateUser (payload: UpdateUserPayload) {
-        let data;
-        const {userId, firstName, lastName, email, phoneNumber, image} = payload;
-        if(!firstName && !lastName && !email && !phoneNumber && !image){
-            data = new ResponseData("error", 400, "Invalid payload", null);
-            return data;
-        }
-        const user = await User.findOneAndUpdate(
-            {_id: userId}, 
+        try {
+            let data;
+            const {id, firstName, lastName, email, phoneNumber, image} = payload;
+            if(!firstName && !lastName && !email && !phoneNumber && !image){
+                data = new ResponseData("error", 400, "Invalid payload", null);
+                return data;
+            }
+            const user = await User.findOneAndUpdate(
+            {_id: id}, 
             {$set: {
                 firstName: firstName,
                 lastName: lastName,
                 email: email,
                 phoneNumber: phoneNumber,
                 image: image,
-            }}, 
+                }}, 
             {new: true});
-        if(!user){
-            data = new ResponseData("error", 400, "Invalid user id", null);
+
+            if(!user){
+                data = new ResponseData("error", 400, "Invalid user id", null);
+                return data;
+            }
+        
+            if(email){
+                await user?.updateOne({
+                    isEmailValid: false,
+                });
+            
+                await user?.save();
+            
+                const token = this.generateJWTToken(email);
+                const expire = this.getExpireTime();
+            
+                await user.updateOne({
+                    verifyEmailToken: token,
+                    verifyEmailTokenExpire: expire
+                });
+
+                await user.save();
+            
+                const verifyUrl = `http://localhost:5500/verify-email?token=${token}&id=${user?._id}`
+            
+                await sendEmail(verifyUrl, user.email);
+            
+                data = new ResponseData("success", 200, "An email has been sent for email verification.", user);
+                return data;
+            }
+        
+            if(phoneNumber){
+                await user?.updateOne({
+                    isPhoneNumberValid: false
+                });
+            
+                await user?.save();
+
+                const otp = await SmsServices.generateOTP();
+            
+                const sendOtp = await SmsServices.sendOtp(user?.phoneNumber, otp);
+                const expire = this.getExpireTime();
+
+                await user.updateOne({
+                    phoneNumberOTPExpire: expire,
+                    phoneNumberOTP: otp,
+                });
+
+                await user.save();
+
+                data = new ResponseData("success", 200, "An otp has been sent to your new phone number, please use that otp to verify your phone number.", {user: user, otp_data: sendOtp});
+                return data;
+            }
+        
+            data = new ResponseData("success", 200, "User updated successfully", user);
             return data;
+        } catch (error) {
+             throw error;   
         }
-
-        if(email){
-            user?.updateOne({
-                isEmailValid: false,
-            });
-            await user?.save();
-        }
-
-        if(phoneNumber){
-            await user?.updateOne({
-                isPhoneNumberValid: false
-            })
-            await user?.save();
-        }
-
-        data = new ResponseData("success", 200, "User updated successfully", user);
-        return data;
     }
 
     static async deleteUser (payload: string) {
@@ -323,6 +371,21 @@ export class UserServices {
         return data;
     }
 
+    static async sendPhoneNumberVerificationOTP (payload: SendPhoneNumberVerificationOTPPayload) {
+        try {
+            let data;
+            const {_id} = payload;
+            if(!_id){
+                data = new ResponseData("error", 400, "Invalid payload", null);
+                return data;
+            }
+
+            // const user = await 
+        } catch (error) {
+            throw error
+        }
+    }
+
     static async validatePassword(password: string, oldPassword: string){
         return bcrypt.compare(password, oldPassword)
     }
@@ -332,7 +395,8 @@ export class UserServices {
     }
 
     static generateToken (payload: string){
-        return crypto.createHash('sha256').update(payload);
+        const token = crypto.createHash('sha256').update(payload)
+        return `${token}`;
     }
 
     static getExpireTime (){

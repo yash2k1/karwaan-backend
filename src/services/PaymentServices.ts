@@ -1,30 +1,63 @@
 import axios from "axios";
+import { razorPayInstance } from "../server";
+import { UserServices } from "./UserServices";
+import Order from "../model/order";
+import User from "../model/user";
 import Logger from "../utils/Logger";
-import Razorpay from "razorpay";
-
-const razorpayInstance = new Razorpay({ 
-    key_id: `${process.env.RAZOR_PAY_KEY_ID}`, 
-    key_secret: `${process.env.RAZOR_PAY_SECRET_KEY}`,
-});
+import { Types } from "mongoose";
 
 export class PaymentServices {
-    static async createOrder(amount: number, order_id: string) {
-        try {
-            const order = await razorpayInstance.orders.create({
-                amount: amount,
+    static createPaymentLink = async (amount: number, order_id: Types.ObjectId) => {
+        try { 
+            const expire = UserServices.getExpireTime();
+
+            const order = await Order.findById(order_id);
+            if(!order){
+                Logger.error("Order not found");
+                return null;
+            }
+
+            const user = await User.findById(order.userId);
+            if(!user){
+                Logger.error("User not found")
+                return null;
+            }
+
+            const payment = await razorPayInstance.paymentLink.create({
+                amount: amount * 100,
                 currency: 'INR',
-                receipt: order_id,
-                partial_payment: false,
-                notes: {
-                    key1: "Order generation for karwaan films.",
-                    key2: null
-                }
-            });
+                accept_partial: false,
+                expire_by: expire,
+                reference_id: order_id.toString('hex'),
+                description: `Payment for order id ${order_id}`,
+                customer: {
+                    name: `${user?.firstName} ${user?.lastName}`,
+                    email: user.email,
+                    contact: user.phoneNumber
+                },
+                notify: {
+                    sms: true,
+                    email: true
+                },
+                reminder_enable: true,
+                callback_url: `https://localhost:3000/order/payment_status/${order_id}`,
+                callback_method: "get"
+            })
             
-            return order;
-        } catch (error: any) {
-            // Log the error description
-            return Logger.error(error.description);
+            return payment;
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
+    } 
+
+    static fetchStandardPaymentLinkById = async (payment_id: string) => {
+        try {
+            const payment = await razorPayInstance.paymentLink.fetch(payment_id);
+            return payment;
+        } catch (error) {
+            console.log(error);
+            throw error
         }
     }
 }
