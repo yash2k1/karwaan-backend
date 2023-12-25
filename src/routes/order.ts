@@ -1,8 +1,10 @@
 import { Router } from "express";
-import { createOrder } from "../controller/order";
+import { createOrder, updateOrderPaymentStatus } from "../controller/order";
+import { verifyToken } from "../middleware/verifyToken";
 
 const router = Router();
 
-router.route('/').post(createOrder);
+router.route('/').post(verifyToken, createOrder);
+router.route('/:id').put(verifyToken, updateOrderPaymentStatus);
 
 export default router;

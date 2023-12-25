@@ -1,17 +1,18 @@
 import { Router } from "express";
 import { addItemToCart, emptyCart, getAllCartItems, removeItemFromCart } from "../controller/cartItem";
+import { verifyToken } from "../middleware/verifyToken";
 
 const router = Router();
 
-router.route('/').post(addItemToCart)
+router.route('/').post(verifyToken, addItemToCart)
 
 // here, this is cartItemId 
-router.route('/:id').delete(removeItemFromCart)
+router.route('/:id').delete(verifyToken, removeItemFromCart)
 
 // here, this id is userId 
 router
     .route('/:id')
-    .get(getAllCartItems)
-    .delete(emptyCart);
+    .get(verifyToken, getAllCartItems)
+    .delete(verifyToken, emptyCart);
 
 export default router;
