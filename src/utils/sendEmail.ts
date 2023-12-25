@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 
-export const sendEmail = (verifyUrl: string, email: string) => {
+export const sendEmail = async (verifyUrl: string, email: string) => {
     try {
 
         const transport = nodemailer.createTransport({
@@ -20,7 +20,7 @@ export const sendEmail = (verifyUrl: string, email: string) => {
             html: `<p>Click the following link to verify your email: <a href="${verifyUrl}">${verifyUrl}</a></p>`
         };
 
-        const sendMail = transport.sendMail(mailOptions);
+        await transport.sendMail(mailOptions).catch((error) => console.log(error));
     } catch (error) {
         throw error;
     }
