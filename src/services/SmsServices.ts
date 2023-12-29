@@ -18,7 +18,7 @@ export class SmsServices {
                 data: {
                     route: 'otp',
                     numbers: payload,
-                    variables_values: JSON.stringify({ OTP: otp }),
+                    variables_values: otp,
                 },
             };
 
