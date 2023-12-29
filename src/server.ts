@@ -1,13 +1,14 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import fileUpload from 'express-fileupload'
-import cors from 'cors'
+import fileUpload from 'express-fileupload';
+import cors from 'cors';
+import AWS from 'aws-sdk';
+import Razorpay from 'razorpay';
 import Logger from './utils/Logger';
 import Routes from './routes/_index';
 import { connectDB } from '../config/connectDB';
 import { initializeModel } from './model/_index';
 import { globalErrorHandler } from './middleware/globalErrorHandler';
-import Razorpay from 'razorpay';
 
 dotenv.config({path: './config/.env'});
 
@@ -20,6 +21,14 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(fileUpload());
 app.use(cors());
+
+export const s3 = new AWS.S3({
+    endpoint: process.env.DIGITAL_OCEAN_BUCKET_ENDPOINT!,
+    // accessKeyId: 'DO00NMU84TWPTA6QVGK2',
+    accessKeyId: process.env.DIGITAL_OCEAN_BUCKET_ACCESS_ID!,
+    secretAccessKey: process.env.DIGITAL_OCEAN_BUCKET_SECRET_ACCESS_KEY,
+    region: 'ap-south-1',
+});
 
 export const razorPayInstance = new Razorpay({
     key_id: process.env.RAZOR_PAY_KEY_ID!, 
