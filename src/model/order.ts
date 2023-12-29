@@ -3,7 +3,7 @@ import mongoose, { Schema } from "mongoose";
 interface OrderInterface {
     products: string[];
     userId: string;
-    status: 'PAYMENT PENDING' | 'PAYMENT COMEPLTE' | 'PAYMENT FAILED',
+    status: 'PAYMENT PENDING' | 'PAYMENT COMPELTE' | 'PAYMENT FAILED',
     amount: number;
     payment_id: string;
     download_url: string[];
