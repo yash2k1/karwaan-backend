@@ -51,19 +51,21 @@ export const sendPhoneNumberVerificationOTP = errorHandler(async (request: Reque
 
 export const getUser = errorHandler(async(request: Request, response: Response) =>{
     const data = await UserServices.getUser(request.params.id);
-    
     return response.status(data.statusCode).json(data);
 });
 
 export const updateUser = errorHandler(async(request: Request, response: Response) =>{
     const payload = {...request.params, ...request.body}
     const data = await UserServices.updateUser(payload);
-    
     return response.status(data.statusCode).json(data);
 });
 
 export const deleteUser = errorHandler(async(request: Request, response: Response) =>{
     const data = await UserServices.deleteUser(request.params.id);
-    
+    return response.status(data.statusCode).json(data);
+});
+
+export const validateOtp = errorHandler(async(request: Request, response: Response) =>{
+    const data = await UserServices.validateOtp(request.body.otp, request.body.id);
     return response.status(data.statusCode).json(data);
 });
