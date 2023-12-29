@@ -6,6 +6,8 @@ import Order from "../model/order";
 import User from "../model/user";
 import { Types, isObjectIdOrHexString } from "mongoose";
 import { ResponseData } from "../utils/ResponseData";
+import { s3 } from "../server";
+import ProductMetaData from "../model/ProductMetaData";
 
 export const addProduct = errorHandler(async (request: Request, response: Response) => {
     let data: ResponseData;
@@ -29,8 +31,6 @@ export const addProduct = errorHandler(async (request: Request, response: Respon
         data = new ResponseData("error", 400, "Please upload a single file at a time", null);
         return response.status(data.statusCode).json(data)
     }
-
-    console.log(file?.mimetype);
 
     let type: 'image' | 'video' | null;
     
@@ -58,7 +58,7 @@ export const addProduct = errorHandler(async (request: Request, response: Respon
         tags: tags, 
         price: price,
         description: description,
-        image: {
+        media: {
             data: file?.data.toString('base64'),
             url: null,
             type: type
@@ -67,9 +67,29 @@ export const addProduct = errorHandler(async (request: Request, response: Respon
 
     await newProduct.save();
 
-    data = new ResponseData("success", 200, "Product created successfully", newProduct);
-    return response.status(data.statusCode).json(data)
-})
+    const bucketUploadParams = {
+        Bucket: 'karwaan-bucket',
+        Key: `${Date.now}_${file.name}`,
+        Body: file.data,
+        ContentType: file.mimetype,
+        ACL: 'public-read',
+    }
+
+    s3.upload(bucketUploadParams, async (error: any, data: any) => {
+        if(error){
+            return console.log(error);
+        }
+        
+        const url = data.Location;
+        const newProductMetaData = await ProductMetaData.create({
+            productId: newProduct._id,
+            url: url
+        });
+
+        data = new ResponseData("success", 200, "Product added successfully", {product_data: newProduct, product_metadata: newProductMetaData});
+        return response.status(data.statusCode).json(data);
+    });
+});
 
 export const updateProduct = errorHandler(async (request: Request, response: Response) => {
     let data;
