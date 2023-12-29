@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { deleteUser, forgotPassword, getUser, resetPassword, sendVerificationEmail, signin, signout, signup, updateUser, verifyEmail } from "../controller/user";
+import { deleteUser, forgotPassword, getUser, resetPassword, sendVerificationEmail, signin, signout, signup, updateUser, validateOtp, verifyEmail } from "../controller/user";
 import { verifyToken } from "../middleware/verifyToken";
 
 const router = Router();
@@ -16,5 +16,7 @@ router
     .get(verifyToken, getUser)
     .put(verifyToken, updateUser)
     .delete(verifyToken, deleteUser)
+
+router.route('/validate-otp/:id').put(verifyToken, validateOtp);
 
 export default router;
