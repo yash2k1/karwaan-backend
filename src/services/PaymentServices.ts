@@ -33,7 +33,7 @@ export class PaymentServices {
                 customer: {
                     name: `${user?.firstName} ${user?.lastName}`,
                     email: user.email,
-                    contact: user.phoneNumber
+                    // contact: user.phoneNumber
                 },
                 notify: {
                     sms: true,
@@ -42,12 +42,13 @@ export class PaymentServices {
                 reminder_enable: true,
                 callback_url: `https://localhost:3000/order/payment_status/${order_id}`,
                 callback_method: "get"
+            }).catch((error) => {
+                console.log(error);
             })
             
             return payment;
         } catch (error) {
             console.log(error);
-            throw error;
         }
     } 
 

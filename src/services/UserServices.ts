@@ -359,6 +359,32 @@ export class UserServices {
         }
     }
 
+    static validateOtp = async (payload: number, id: string) => {
+        const userLookup = await User.findOne({_id: id});
+        if(!userLookup) {
+            return new ResponseData("error", 400, "User not found", null);
+        }
+
+        if(userLookup.phoneNumberOTP !== payload){
+            return new ResponseData("error", 400, "OTP is incorrect", null);
+        }
+
+        const time = Date.now();
+
+        if(time > userLookup.phoneNumberOTPExpire){
+            return new ResponseData("error", 400, "OTP has expired. Please try again.", null);
+        }
+
+        await userLookup.updateOne({
+            isPhoneNumberValid: true,
+            phoneNumberOTPExpire: null,
+            phoneNumberOTP: null
+        })
+
+        await userLookup.save();
+        return new ResponseData("success", 200, "Your phone number is verified", null);
+    }
+
     static async deleteUser (payload: string) {
         let data;
         const user = await User.findByIdAndDelete(payload)
