@@ -7,13 +7,13 @@ export const verifyToken = (request: Request, response: Response, next: NextFunc
   const token = request.header('Authorization');
 
   if (!token) {
-    data = new ResponseData("error", 400, "Unauthorized: Missing token", null);
+    data = new ResponseData("error", 403, "Unauthorized: Missing token", null);
     return response.status(data.statusCode).json(data);
   }
   
   jwt.verify(token, process.env.JWT_SECRET as string, (error, user) => {
     if (error) {
-      data = new ResponseData("error", 400, "Unauthorized: Invalid token", null);
+      data = new ResponseData("error", 403, error.message, null);
       return response.status(data.statusCode).json(data);
     }
 
