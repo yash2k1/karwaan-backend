@@ -152,14 +152,14 @@ export class CartItemServices {
             return data;
         }
 
-        let products: string[] = [];
+        let products: Types.ObjectId[] = [];
         for(const cartItem of cartItems){
             const product = await Product.findById(cartItem.productId);
             if(!product){
                 return new ResponseData("error", 400, "Product not found", null);
             }
 
-            products = [...products, product._id.toHexString()];
+            products = [...products, product._id];
         }
 
         data = await OrderServices.createOrder({userId: payload, products})        

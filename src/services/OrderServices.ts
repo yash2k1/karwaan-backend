@@ -1,25 +1,22 @@
+import ProductMetaData from "../model/ProductMetaData";
 import Order from "../model/order";
-import Product from "../model/product";
+import Product, { ProductInterface } from "../model/product";
 import User from "../model/user";
 import { ResponseData } from "../utils/ResponseData";
 import { PaymentServices } from "./PaymentServices";
-import AWS from 'aws-sdk'
+import {Types} from 'mongoose';
 
 type CreateOrderPayload = {
     userId: string;
-    products: string[];
+    products: Types.ObjectId[];
 }
-
-const s3 = new AWS.S3;
 
 export class OrderServices {
     static async createOrder(payload: CreateOrderPayload) {
-        let data;
         const {userId, products} = payload;
 
         if(!userId || !products){
-            data = new ResponseData("error", 400, "Invalid payload", null);
-            return data;
+            return new ResponseData("error", 400, "Invalid payload", null);
         }
 
         if(products.length === 0){
@@ -29,31 +26,27 @@ export class OrderServices {
         const user = await User.findById(userId);
 
         if(!user){
-            data = new ResponseData("error", 400, "User not found", null);
-            return data;
+            return new ResponseData("error", 400, "User not found", null);
         }
 
         let totalAmount = 0;
         for(let productId in products){
-            const product = await Product.findById(productId);
+            const product = await Product.findById(products[productId]);
             
             if(!product){
-                data = new ResponseData("error", 400, "Product not found", null);
-                return data;
+                return new ResponseData("error", 400, "Product not found", null);
             }
 
             totalAmount += product.price
         }
 
-        let newOrderObj = new Order({
+        let newOrder = await Order.create({
             userId: userId,
             products: products,
             status: 'PAYMENT PENDING',
             amount: totalAmount,
             download_url: null
         });
-                
-        const newOrder = await newOrderObj.save();
 
         const razorpayPayment = await PaymentServices.createPaymentLink(totalAmount, newOrder?._id);
         if(!razorpayPayment){
@@ -71,8 +64,7 @@ export class OrderServices {
             payment_details: razorpayPayment
         }
 
-        data = new ResponseData("success", 200, "Order generated", returnData);
-        return data;
+       return new ResponseData("success", 200, "Order generated", returnData);
     };
 
     static updateOrderStatus = async (order_id: string) => {
@@ -86,37 +78,27 @@ export class OrderServices {
             return new ResponseData("error", 400, "No payment details were found", null);
         }
 
-        let imageUrl: string[] = [];
-        for(let i in order.products){
-            const productId = order.products[i];
-            const product = await Product.findById(productId);
-            if(!product){
-                return new ResponseData("error", 400, "Product not found", null);
-            }
-
-            const binaryData = Buffer.from(product.media.data, 'base64');
-            const uploadParams = {
-                Bucket: 'bucketName',
-                Key: `${order_id}_${Date.now()}`,
-                Body: binaryData,
-            };
-
-            const result = await s3.upload(uploadParams).promise();
-            const objectUrl = result.Location;
-            imageUrl = [...imageUrl, objectUrl]
-        }
-
         let updatedOrder;
         if(payment.amount === payment.amount_paid){
             updatedOrder = await Order.findByIdAndUpdate(order_id, {
-                $set: {status: 'PAYMENT COMEPLTE'}},
+                $set: {status: 'PAYMENT COMPELTE'}},
                 {new: true});
+            
+            let productMetadatas: any = [];
+            const productIds = order.products;
+            productIds.map(async (productId) => {
+                const productMetaData = await ProductMetaData.findOne({productId: productId});
+                productMetadatas = [...productMetadatas, productMetaData];
+            });
+
+            return new ResponseData("success", 200, "Success", {order_details: updatedOrder, product_metadata: productMetadatas});
         }else{
             updatedOrder = await Order.findByIdAndUpdate(order_id, {
                 $set: {status: 'PAYMENT FAILED'}},
                 {new: true});
+                
+            return new ResponseData("success", 200, "Payment has failed", {order_details: updatedOrder});
         }
 
-        return new ResponseData("success", 200, "Success", updatedOrder);
     }
 }
