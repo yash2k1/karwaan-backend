@@ -144,7 +144,7 @@ export class UserServices {
 
         await user.save();
 
-        const verifyUrl = `http://localhost:5500/verify-email?token=${token}&id=${user?._id}`
+        const verifyUrl = `http://localhost:3000/verify-email?token=${token}&id=${user?._id}`
 
         await sendEmail(verifyUrl, user.email);
 
