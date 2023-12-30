@@ -38,7 +38,7 @@ app.listen(PORT, async () => {
     try {
         app.use(Routes);
         app.use('*', globalErrorHandler);
-        Logger.info(`⚡Successfully connected to http://localhost:${PORT}`); 
+        Logger.info(`⚡Successfully connected to http://139.59.44.144:${PORT}`); 
         await connectDB();
     } catch (error: any) {
         Logger.error(error.message);
