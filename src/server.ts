@@ -13,7 +13,7 @@ import { globalErrorHandler } from './middleware/globalErrorHandler';
 dotenv.config({path: './src/config/.env'});
 
 const app = express();
-const PORT = process.env.PORT || 2022;
+const PORT = process.env.PORT || 3000;
 
 initializeModel();
 
