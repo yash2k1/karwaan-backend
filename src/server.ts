@@ -24,7 +24,6 @@ app.use(cors());
 
 export const s3 = new AWS.S3({
     endpoint: process.env.DIGITAL_OCEAN_BUCKET_ENDPOINT!,
-    // accessKeyId: 'DO00NMU84TWPTA6QVGK2',
     accessKeyId: process.env.DIGITAL_OCEAN_BUCKET_ACCESS_ID!,
     secretAccessKey: process.env.DIGITAL_OCEAN_BUCKET_SECRET_ACCESS_KEY,
     region: 'ap-south-1',
