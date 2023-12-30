@@ -6,11 +6,11 @@ import AWS from 'aws-sdk';
 import Razorpay from 'razorpay';
 import Logger from './utils/Logger';
 import Routes from './routes/_index';
-import { connectDB } from '../config/connectDB';
+import { connectDB } from './config/connectDB';
 import { initializeModel } from './model/_index';
 import { globalErrorHandler } from './middleware/globalErrorHandler';
 
-dotenv.config({path: './config/.env'});
+dotenv.config({path: './src/config/.env'});
 
 const app = express();
 const PORT = process.env.PORT || 2022;
